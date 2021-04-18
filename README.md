@@ -49,7 +49,7 @@ tex_string = env.render_string(raw, inhalt="Hier steht ein gerenderter Text")
 
 # Den gerenderten TeX-String mit ConTeXt in ein PDF kompilieren und speichern.
 dateien = ["templates/logo.png"]
-pdf = pdf.PDF(tex_string, dateien=dateien)
+pdf = PDF(tex_string, dateien=dateien)
 pdf.speichere_pdf("mein_pdf.pdf", verzeichnis="pdfs")
 
 # Einem PDF Bookmarks hinzufügen
