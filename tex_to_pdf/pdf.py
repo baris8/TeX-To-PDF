@@ -23,6 +23,7 @@ class PDF:
         self.pdf_bytes = None
 
     def kompiliere_pdf(self):
+        log.info("Kompiliere das PDF mit folgenden Dateien: %r", self.dateien)
         if not self.tex_string:
             log.exception("Eine TeX-Source muss anegegeben werden.")
             raise ValueError
@@ -63,6 +64,7 @@ class PDF:
         self.pdf_bytes = pdf_bytes
 
     def bookmarks_hinzufuegen(self, bookmarks):
+        log.info("Füge dem PDF folgende Bookmarks hinzu: %r", bookmarks)
         if not self.pdf_bytes:
             log.warning(
                 "Es existieren noch keine PDF-Bytes, daher wird das PDF kompiliert"
@@ -83,6 +85,9 @@ class PDF:
             self.pdf_bytes = neues_pdf.getvalue()
 
     def speichere_pdf(self, dateiname, verzeichnis=None):
+        log.info(
+            "Speichere das PDF %r in folgendem Verzeichnis %r", dateiname, verzeichnis
+        )
         if not self.pdf_bytes:
             log.warning(
                 "Es existieren noch keine PDF-Bytes, daher wird das PDF kompiliert"
