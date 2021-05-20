@@ -9,6 +9,14 @@ Diese werden, dann beim kompilieren verlinkt und von ConTeXt genutzt.
 Vorraussetzung ist, dass auf dem System ConTeXt installiert ist und im `$PATH` gesetzt wurde:
 https://wiki.contextgarden.net/ConTeXt_Standalone
 
+Für den Fall das nur die Standalone auf dem System ist, muss folgender Befehl einmal ausgeführt werden:
+
+```
+source /installation-dir/tex/setuptex
+```
+
+Damit kann ConTeXt dann per Konsolen-Kommando erst aufgerufen werden.
+
 # Usage
 
 Für Folgende Ordnerstruktur:
@@ -26,7 +34,7 @@ Inhalt der `context.tex`:
 \starttext
 Hello world!
 
-{{inhalt|e}}
+{{inhalt|tex_safe}}
 
 \externalfigure[logo.png]
 

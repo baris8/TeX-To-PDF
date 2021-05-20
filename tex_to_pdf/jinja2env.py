@@ -1,14 +1,35 @@
-from io import BytesIO
-import tempfile
-import subprocess
-import os
-import shutil
-import pathlib
 from jinja2 import Environment, FileSystemLoader, ChoiceLoader
+from decimal import Decimal
 import logging
-from PyPDF2 import PdfFileMerger
 
 log = logging.getLogger(__name__)
+
+
+def tex_safe(s):
+    """
+    Quotet Unicode-Strings so, dass sie literal als TeX-String
+    dargestellt werden.
+    """
+    if isinstance(s, (int, Decimal)):
+        s = str(s)
+    elif not isinstance(s, str):
+        return ""
+
+    return s.translate(
+        {
+            ord(u"|"): u"\\|",
+            ord(u"&"): u"\\&",
+            ord(u"%"): u"\\%",
+            ord(u"$"): u"\\$",
+            ord(u"#"): u"\\#",
+            ord(u"_"): u"\\_",
+            ord(u"{"): u"\\{",
+            ord(u"}"): u"\\}",
+            ord(u"~"): u"\\textasciitilde{}",
+            ord(u"^"): u"\\textasciicircum{}",
+            ord(u"\\"): u"\\textbackslash{}",
+        }
+    )
 
 
 class Jinja2ENV:
@@ -29,6 +50,7 @@ class Jinja2ENV:
             loader.append(filesystem_loader)
 
         self.env = Environment(loader=ChoiceLoader(loader))
+        self.env.filters["tex_safe"] = tex_safe
 
     def render(self, template, **kw):
         return self.env.get_template(template).render(**kw)
@@ -36,8 +58,3 @@ class Jinja2ENV:
     def render_string(self, template_string, **kw):
         template = self.env.from_string(template_string)
         return template.render(**kw)
-
-
-if __name__ == "__main__":
-    env = Jinja2ENV("/mnt/d/ubuntu/context letter test/templates", "b")
-    print(env.env.loader.list_templates())
