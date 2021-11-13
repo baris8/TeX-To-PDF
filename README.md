@@ -17,6 +17,20 @@ source /installation-dir/tex/setuptex
 
 Damit kann ConTeXt dann per Konsolen-Kommando erst aufgerufen werden.
 
+
+---
+
+Für den direkteren Gebrauch ist die ConTeXt-Setup-Datei hinterlegt unter
+`context/first-setup.sh`.
+
+Diese ruft man auf mit `sh ./first-setup.sh --modules=all`
+Dadurch wird ConTeXt installiert und steht zur Nutzung bereit.
+
+Falls der Aufruf `context --version` kein Ergebnis liefert, kann man versuchen das Terminal
+einmal zu schließen und neu zu öffnen.
+Wenn das nicht hilft, dann bitte mit der Anleitung zur Standalone aus dem obigen Link
+Systemweit installieren.
+
 # Usage
 
 Für Folgende Ordnerstruktur:

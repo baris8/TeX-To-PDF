@@ -27,15 +27,16 @@ class PDF:
         if not self.tex_string:
             log.exception("Eine TeX-Source muss anegegeben werden.")
             raise ValueError
-        if not self.dateien:
-            dateien = list()
 
         # TeX-Datei im Temp-Directory erstellen
         temp_dir = tempfile.mkdtemp()
         datei_pfad = f"{temp_dir}/document.tex"
         with open(datei_pfad, "w", encoding="utf8") as file:
             file.write(self.tex_string)
-        log.debug(f"Temporäres Verzeichnis mit TeX-Datei erstellt: {tempfile.tempdir}")
+        log.debug(
+            "Temporäres Verzeichnis mit TeX-Datei erstellt: %s",
+            tempfile.tempdir
+        )
 
         # Zusätzliche Dateien als Sym-Link abspeichern
         for datei in self.dateien:
@@ -47,10 +48,14 @@ class PDF:
             ["context", "--nonstop", "--once", "document.tex"], cwd=temp_dir
         )
 
-        # Falls die TeX-Datei nicht kompiliert werden konnte, wird ein Log gesetzt.
+        # Falls die TeX-Datei nicht kompiliert werden konnte,
+        # wird ein Log gesetzt.
         # Das Temp-Directory bleibt erhalten.
         if document.returncode != 0:
-            log.exception(f"Es gab einen Fehler beim kompilieren des PDFs: {temp_dir}")
+            log.exception(
+                "Es gab einen Fehler beim kompilieren des PDFs: %s",
+                temp_dir
+            )
             return
 
         pdf_datei_pfad = f"{temp_dir}/document.pdf"
@@ -67,7 +72,8 @@ class PDF:
         log.info("Füge dem PDF folgende Bookmarks hinzu: %r", bookmarks)
         if not self.pdf_bytes:
             log.warning(
-                "Es existieren noch keine PDF-Bytes, daher wird das PDF kompiliert"
+                "Es existieren noch keine PDF-Bytes, "
+                "daher wird das PDF kompiliert"
             )
             self.kompiliere_pdf()
 
@@ -77,7 +83,10 @@ class PDF:
         output.append(pdf)
 
         for text, seite in bookmarks:
-            log.debug(f"Füge folgende Bookmark auf Seite {seite} hinzu: {text}")
+            log.debug(
+                "Füge folgende Bookmark auf Seite %s hinzu: %s",
+                seite, text
+            )
             output.addBookmark(text, seite, None)
 
         with BytesIO() as neues_pdf:
@@ -86,17 +95,20 @@ class PDF:
 
     def speichere_pdf(self, dateiname, verzeichnis=None):
         log.info(
-            "Speichere das PDF %r in folgendem Verzeichnis %r", dateiname, verzeichnis
+            "Speichere das PDF %r in folgendem Verzeichnis %r",
+            dateiname, verzeichnis
         )
         if not self.pdf_bytes:
             log.warning(
-                "Es existieren noch keine PDF-Bytes, daher wird das PDF kompiliert"
+                "Es existieren noch keine PDF-Bytes, "
+                "daher wird das PDF kompiliert"
             )
             try:
                 self.kompiliere_pdf()
             except ValueError:
                 log.exception(
-                    "Das PDF konnte nicht gespeichert werden, da der TeX-String leer war."
+                    "Das PDF konnte nicht gespeichert werden, "
+                    "da der TeX-String leer war."
                 )
 
         if verzeichnis and not os.path.exists(verzeichnis):

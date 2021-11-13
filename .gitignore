@@ -3,3 +3,6 @@
 .vscode
 .venv
 dist
+context/bin
+context/tex
+context/status-of-update.lua
