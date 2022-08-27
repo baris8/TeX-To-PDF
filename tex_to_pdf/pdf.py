@@ -98,7 +98,7 @@ class ConTeXtPDFManager:
             log.info(f"{pfad} gespeichert.")
 
     @classmethod
-    def bookmark_hinzufuegen(cls, pdf_src: bytes, bookmarks: List[Tuple[str, int]]) -> bytes:
+    def bookmarks_hinzufuegen(cls, pdf_src: bytes, bookmarks: List[Tuple[str, int]]) -> bytes:
         """
         Erstellt für die angegebene pdf_src Bookmarks, dafür übergibt man ein Liste von Tupeln
         in folgendem Format: [('Bookmark', Seite), ...]
