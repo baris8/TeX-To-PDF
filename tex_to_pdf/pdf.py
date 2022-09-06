@@ -1,3 +1,4 @@
+from enum import Enum
 from io import BytesIO
 import tempfile
 import subprocess
@@ -6,7 +7,7 @@ import shutil
 import pathlib
 import logging
 from typing import List, Tuple, Union
-from PyPDF2 import PdfFileMerger
+from PyPDF2 import PdfFileMerger, PdfFileReader, PdfFileWriter
 
 log = logging.getLogger(__name__)
 
@@ -47,6 +48,9 @@ def fuehre_context_aus(cwd: str):
         log.exception(msg)
         raise Exception(msg)
 
+class Sprache(Enum):
+    deutsch = 'de'
+    englisch = 'en'
 
 class ConTeXtPDFManager:
     @classmethod
@@ -80,12 +84,13 @@ class ConTeXtPDFManager:
         return pdf_bytes
 
     @classmethod
-    def speichere_pdf(cls, pdf_bytes: bytes, datei_name: str, verzeichnis: str = None):
+    def speichere_pdf(cls, pdf_bytes: bytes, datei_name: str, verzeichnis: str = None) -> Union[str, None]:
         """Speichert die PDF-Bytes unter (verzeichnis/)datei_name"""
         log.info(f'Speichere PDF {datei_name}{f"in {verzeichnis}" if verzeichnis else ""}')
         if not pdf_bytes:
             msg = 'PDF nicht gespeichert, Bytes leer'
             log.error(msg)
+            return
         if verzeichnis and not os.path.exists(verzeichnis):
             log.debug("Das Verzeichnis {verzeichnis} anlegen.")
             os.makedirs(verzeichnis)
@@ -96,6 +101,7 @@ class ConTeXtPDFManager:
         with open(pfad, "wb") as file:
             file.write(pdf_bytes)
             log.info(f"{pfad} gespeichert.")
+        return pfad
 
     @classmethod
     def bookmarks_hinzufuegen(cls, pdf_src: bytes, bookmarks: List[Tuple[str, int]]) -> bytes:
@@ -114,6 +120,88 @@ class ConTeXtPDFManager:
             log.debug(f"Füge folgende Bookmark auf Seite {seite} hinzu: {text}")
             output.addBookmark(text, seite, None)
 
-        with BytesIO() as neues_pdf:
-            output.write(neues_pdf)
-            return neues_pdf.getvalue()
+        output_pdf = BytesIO()
+        output.write(output_pdf)
+        return output_pdf.getvalue()
+
+    @classmethod
+    def fuege_pdf_seiten_hinzu(cls, pdf_src: bytes, *pdfs_bytes: bytes) -> bytes:
+        """Fügt die übergebenen pdfs_bytes nacheinander dem pdf_src hinzu und returned die output_pdf_bytes"""
+        merger = PdfFileMerger()
+        pdf = BytesIO(pdf_src)
+        merger.append(pdf)
+
+        for pdf_bytes in pdfs_bytes:
+            if not pdf_bytes:
+                log.warning('PDF-Bytes werden nicht angehangen, da es leer ist')
+                continue
+            pdf_file = BytesIO(pdf_bytes)
+            merger.append(pdf_file)
+
+        output_pdf =  BytesIO()
+        merger.write(output_pdf)
+        return output_pdf.getvalue()
+
+    @classmethod
+    def fuege_stempel_hinzu(
+        cls,
+        pdf_src: bytes,
+        stempel_pdf: bytes,
+        overlay=False
+    ) -> bytes:
+        """
+        Stempelt die stempel_pdf-Bytes auf die pdf_src
+
+        Wenn nur die erste Seite der pdf_src gestempelt werden soll,
+        muss der Parameter nur_erste_seite = True gesetzt werden.
+
+        Wenn der Stempel als Hintergrund hinzugefügt werden soll,
+        muss der Parameter overlay = True gesetzt werden.
+        Standardmäßig wird es unten drauf "gestempelt"
+        """
+        pdfSrcReader = PdfFileReader(BytesIO(pdf_src))
+        stempel_pdf = BytesIO(stempel_pdf)
+
+        pdfWriter = PdfFileWriter()
+
+        for seite in range(pdfSrcReader.getNumPages()):
+            vordergrund = pdfSrcReader.getPage(seite)
+            pdfStempelReader = PdfFileReader(stempel_pdf)
+            hintergrund = pdfStempelReader.getPage(0)
+
+            if overlay:
+                hintergrund, vordergrund = vordergrund, hintergrund
+
+            hintergrund.mergePage(vordergrund)
+            pdfWriter.addPage(hintergrund)
+
+        output_pdf = BytesIO()
+        pdfWriter.write(output_pdf)
+        return output_pdf.getvalue()
+
+    @classmethod
+    def fuege_kopie_stempel_hinzu(
+        cls,
+        pdf_src: bytes,
+        overlay: bool = False,
+        sprache: Sprache = Sprache.deutsch,
+    ) -> bytes:
+        """
+        Fügt dem übergebenen pdf_src einen englischen/deutschen Kopie-Stempel hinzu
+        """
+        stempel_dir = 'pdfs'
+        if sprache == sprache.deutsch:
+            datei = 'Kopie-Stempel.pdf'
+        elif sprache == sprache.englisch:
+            datei = 'Copy-Stempel.pdf'
+        else:
+            raise Exception('Keine gültige Sprache angegeben')
+
+        stempel_path = os.path.join(stempel_dir, datei)
+        with open(stempel_path, 'rb') as f:
+            stempel_bytes = f.read()
+        return cls.fuege_stempel_hinzu(
+            pdf_src=pdf_src,
+            stempel_pdf=stempel_bytes,
+            overlay=overlay
+        )
