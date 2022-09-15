@@ -44,12 +44,9 @@ class Jinja2ENV:
     """
 
     def __init__(self, *args) -> None:
-        loader = list()
-        for arg in args:
-            filesystem_loader = FileSystemLoader(arg)
-            loader.append(filesystem_loader)
+        _filesystem_loader = FileSystemLoader(args)
 
-        self.env = Environment(loader=ChoiceLoader(loader))
+        self.env = Environment(loader=_filesystem_loader)
         self.env.filters["tex_safe"] = tex_safe
 
     def render(self, template, **kw):
